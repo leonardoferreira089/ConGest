@@ -1,0 +1,59 @@
+﻿@model ConGest.Models.DemandeConge
+
+@{
+    ViewData["Title"] = "Nouvelle demande de congé";
+}
+
+<h1>Nouvelle demande de congé</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @* Champ CollaborateurId - Visible pour l'admin, caché pour les collaborateurs *@
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="form-group">
+                    <label asp-for="CollaborateurId" class="control-label"></label>
+                    <select asp-for="CollaborateurId" class="form-control" asp-items="ViewBag.CollaborateurId"></select>
+                    <span asp-validation-for="CollaborateurId" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" asp-for="CollaborateurId" />
+                <div class="form-group">
+                    <label class="control-label">Collaborateur</label>
+                    @* Récupérer le nom du collaborateur depuis ViewBag *@
+                    <input type="text" class="form-control" value="@ViewBag.CollaborateurNom" readonly />
+                </div>
+            }
+
+            <div class="form-group">
+                <label asp-for="DateDebut" class="control-label"></label>
+                <input asp-for="DateDebut" class="form-control" type="date" />
+                <span asp-validation-for="DateDebut" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DateFin" class="control-label"></label>
+                <input asp-for="DateFin" class="form-control" type="date" />
+                <span asp-validation-for="DateFin" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Créer" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Retour à la liste</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

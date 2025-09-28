@@ -1,0 +1,39 @@
+﻿@{
+    ViewData["Title"] = "Administration";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Administration</h1>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gestion des collaborateurs</h5>
+                    <p class="card-text">Ajouter, modifier ou supprimer des collaborateurs.</p>
+                    <a asp-action="Collaborateurs" class="btn btn-primary">Accéder</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gestion des demandes de congé</h5>
+                    <p class="card-text">Consulter et gérer les demandes de congé.</p>
+                    <a asp-action="DemandesConge" class="btn btn-primary">Accéder</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gestion des jours bloqués</h5>
+                    <p class="card-text">Ajouter ou supprimer des jours bloqués.</p>
+                    <a asp-action="JoursBloques" class="btn btn-primary">Accéder</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

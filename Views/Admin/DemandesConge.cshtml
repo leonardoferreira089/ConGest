@@ -1,0 +1,57 @@
+﻿@model IEnumerable<ConGest.Models.DemandeConge>
+
+@{
+    ViewData["Title"] = "Gestion des demandes de congé";
+}
+
+<h1>Gestion des demandes de congé</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Collaborateur
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DateDebut)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DateFin)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NombreDeJours)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DateCreation)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Collaborateur.Nom)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateDebut)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateFin)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NombreDeJours)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateCreation)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-controller="DemandesConge" asp-route-id="@item.Id">Modifier</a> |
+                    <a asp-action="Details" asp-controller="DemandesConge" asp-route-id="@item.Id">Détails</a> |
+                    <a asp-action="Delete" asp-controller="DemandesConge" asp-route-id="@item.Id">Supprimer</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

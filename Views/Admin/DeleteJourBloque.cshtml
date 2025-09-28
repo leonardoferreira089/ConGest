@@ -1,0 +1,38 @@
+﻿@model ConGest.Models.JourBloque
+
+@{
+    ViewData["Title"] = "Supprimer un jour bloqué";
+}
+
+<h1>Supprimer un jour bloqué</h1>
+
+<h3>Êtes-vous sûr de vouloir supprimer ce jour bloqué ?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DateBloquee)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DateBloquee)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Raison)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Raison)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.UtilisateurBloqueur)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.UtilisateurBloqueur)
+        </dd>
+    </dl>
+
+    <form asp-action="DeleteJourBloque">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Supprimer" class="btn btn-danger" /> |
+        <a asp-action="Index" class="btn btn-secondary">Retour</a>
+    </form>
+</div>

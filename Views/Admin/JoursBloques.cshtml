@@ -1,0 +1,48 @@
+﻿@model IEnumerable<ConGest.Models.JourBloque>
+
+@{
+    ViewData["Title"] = "Gestion des jours bloqués";
+}
+
+<h1>Gestion des jours bloqués</h1>
+
+<p>
+    <a asp-action="Create" asp-controller="JoursBloques">Ajouter un jour bloqué</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.DateBloquee)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Raison)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UtilisateurBloqueur)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateBloquee)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Raison)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UtilisateurBloqueur)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-controller="JoursBloques" asp-route-id="@item.Id">Modifier</a> |
+                    <a asp-action="Details" asp-controller="JoursBloques" asp-route-id="@item.Id">Détails</a> |
+                    <a asp-action="Delete" asp-controller="JoursBloques" asp-route-id="@item.Id">Supprimer</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

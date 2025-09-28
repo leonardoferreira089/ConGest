@@ -1,0 +1,36 @@
+﻿@model ConGest.Models.JourBloque
+
+@{
+    ViewData["Title"] = "Détails du jour bloqué";
+}
+
+<h1>Détails du jour bloqué</h1>
+
+<div>
+    <h4>JourBloque</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DateBloquee)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DateBloquee)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Raison)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Raison)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.UtilisateurBloqueur)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.UtilisateurBloqueur)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Modifier</a> |
+    <a asp-action="Index">Retour à la liste</a>
+</div>

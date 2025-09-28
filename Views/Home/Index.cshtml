@@ -1,8 +1,162 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model ConGest.Controllers.CalendarViewModel
+@{
+    ViewData["Title"] = "Calendrier des congés";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Calendrier des congés</h1>
 </div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulaire de demande de congé -->
+<div class="modal fade" id="demandeCongeModal" tabindex="-1" role="dialog" aria-labelledby="demandeCongeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="demandeCongeModalLabel">Nouvelle demande de congé</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="demandeCongeForm">
+                    <div class="form-group">
+                        <label for="collaborateurId">Collaborateur</label>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <select class="form-control" id="collaborateurId" name="collaborateurId" required>
+                                @foreach (var collaborateur in Model.DemandesConge.Select(dc => dc.Collaborateur).Distinct())
+                                {
+                                    <option value="@collaborateur.Id">@collaborateur.Nom</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            // Pour les collaborateurs, on utilise le collaborateur connecté
+                            var collaborateur = Model.CurrentCollaborateur;
+                            if (collaborateur != null)
+                            {
+                                <input type="hidden" id="collaborateurId" name="collaborateurId" value="@collaborateur.Id" />
+                                <input type="text" class="form-control" value="@collaborateur.Nom" readonly />
+                            }
+                            else
+                            {
+                                <input type="hidden" id="collaborateurId" name="collaborateurId" value="" />
+                                <input type="text" class="form-control" value="Collaborateur inconnu" readonly />
+                            }
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label for="dateDebut">Date de début</label>
+                        <input type="date" class="form-control" id="dateDebut" name="dateDebut" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dateFin">Date de fin</label>
+                        <input type="date" class="form-control" id="dateFin" name="dateFin" required>
+                    </div>
+                    <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="submitDemande">Soumettre</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bouton pour ouvrir le formulaire de demande -->
+@if (User.Identity.IsAuthenticated)
+{
+    <div class="fixed-bottom mb-3 mr-3 text-right">
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#demandeCongeModal">
+            Nouvelle demande
+        </button>
+    </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,dayGridWeek,dayGridDay'
+                },
+                events: [
+        @foreach (var demande in Model.DemandesConge)
+        {
+            <text>
+                                {
+                                    title: '@demande.Collaborateur.Nom',
+                                    start: '@demande.DateDebut.ToString("yyyy-MM-dd")',
+                                    end: '@demande.DateFin.AddDays(1).ToString("yyyy-MM-dd")',
+                                    color: '@demande.Collaborateur.Couleur',
+                                    textColor: '#ffffff'
+                                },
+            </text>
+        }
+        @foreach (var jour in Model.JoursBloques)
+        {
+            <text>
+                                {
+                                    title: 'Jour bloqué: @jour.Raison',
+                                    start: '@jour.DateBloquee.ToString("yyyy-MM-dd")',
+                                    end: '@jour.DateBloquee.AddDays(1).ToString("yyyy-MM-dd")',
+                                    color: '#cccccc',
+                                    textColor: '#000000'
+                                },
+            </text>
+        }
+                ]
+            });
+            calendar.render();
+
+            // Gestion du formulaire de demande de congé
+            document.getElementById('submitDemande').addEventListener('click', function() {
+                var form = document.getElementById('demandeCongeForm');
+                var formData = new FormData(form);
+                var errorMessage = document.getElementById('errorMessage');
+
+                fetch('/DemandesConge/Create', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Fermer la modal et rafraîchir la page
+                        $('#demandeCongeModal').modal('hide');
+                        location.reload();
+                    } else {
+                        return response.json().then(data => {
+                            // Afficher les erreurs
+                            errorMessage.textContent = data.message || 'Une erreur est survenue.';
+                            errorMessage.style.display = 'block';
+                        });
+                    }
+                })
+                .catch(error => {
+                    errorMessage.textContent = 'Une erreur est survenue: ' + error.message;
+                    errorMessage.style.display = 'block';
+                });
+            });
+        });
+    </script>
+}

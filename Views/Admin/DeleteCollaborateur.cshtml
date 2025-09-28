@@ -1,0 +1,45 @@
+﻿@model ConGest.Models.Collaborateur
+
+@{
+    ViewData["Title"] = "Supprimer un collaborateur";
+}
+
+<h1>Supprimer un collaborateur</h1>
+
+<h3>Êtes-vous sûr de vouloir supprimer ce collaborateur ?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Nom)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Nom)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Couleur)
+        </dt>
+        <dd class="col-sm-10">
+            <span style="display:inline-block; width: 20px; height: 20px; background-color: @Model.Couleur;"></span>
+            @Html.DisplayFor(model => model.Couleur)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Fonction)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Fonction)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EstActif)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EstActif)
+        </dd>
+    </dl>
+
+    <form asp-action="DeleteCollaborateur">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Supprimer" class="btn btn-danger" /> |
+        <a asp-action="Index" class="btn btn-secondary">Retour</a>
+    </form>
+</div>

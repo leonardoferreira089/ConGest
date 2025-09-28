@@ -1,0 +1,39 @@
+﻿@model ConGest.Models.JourBloque
+
+@{
+    ViewData["Title"] = "Ajouter un jour bloqué";
+}
+
+<h1>Ajouter un jour bloqué</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="DateBloquee" class="control-label"></label>
+                <input asp-for="DateBloquee" class="form-control" type="date" />
+                <span asp-validation-for="DateBloquee" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Raison" class="control-label"></label>
+                <input asp-for="Raison" class="form-control" />
+                <span asp-validation-for="Raison" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Créer" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Retour à la liste</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

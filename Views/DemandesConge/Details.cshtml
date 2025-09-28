@@ -1,0 +1,48 @@
+﻿@model ConGest.Models.DemandeConge
+
+@{
+    ViewData["Title"] = "Détails de la demande de congé";
+}
+
+<h1>Détails de la demande de congé</h1>
+
+<div>
+    <h4>DemandeConge</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            Collaborateur
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Collaborateur.Nom)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DateDebut)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DateDebut)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DateFin)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DateFin)
+        </dd>
+        <dt class="col-sm-2">
+            Nombre de jours
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.NombreDeJours)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DateCreation)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DateCreation)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Modifier</a> |
+    <a asp-action="Index">Retour à la liste</a>
+</div>

@@ -1,0 +1,135 @@
+﻿@model ConGest.Models.CalendrierViewModel
+
+@{
+    ViewData["Title"] = "Calendrier des congés";
+}
+
+<h1>Calendrier des congés</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-action="Calendrier" asp-route-year="@Model.Annee" asp-route-month="@(Model.Mois - 1)" class="btn btn-outline-primary">
+            <i class="bi bi-chevron-left"></i> Mois précédent
+        </a>
+        <a asp-action="Calendrier" asp-route-year="@Model.Annee" asp-route-month="@(Model.Mois + 1)" class="btn btn-outline-primary">
+            Mois suivant <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+    <h2>@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Model.Mois) @Model.Annee</h2>
+    <div>
+        <a asp-controller="DemandesConge" asp-action="Create" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nouvelle demande
+        </a>
+    </div>
+</div>
+
+<div class="calendar">
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Dim</th>
+                        <th>Lun</th>
+                        <th>Mar</th>
+                        <th>Mer</th>
+                        <th>Jeu</th>
+                        <th>Ven</th>
+                        <th>Sam</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        DateTime premierJour = new DateTime(Model.Annee, Model.Mois, 1);
+                        int joursDansMois = DateTime.DaysInMonth(Model.Annee, Model.Mois);
+                        int jourDebutSemaine = (int)premierJour.DayOfWeek;
+                        int jour = 1;
+
+                        for (int i = 0; i < 6; i++)
+                        {
+                            <tr>
+                                @for (int j = 0; j < 7; j++)
+                                {
+                                    if (i == 0 && j < jourDebutSemaine)
+                                    {
+                                        <td class="empty"></td>
+                                    }
+                                    else if (jour > joursDansMois)
+                                    {
+                                        <td class="empty"></td>
+                                    }
+                                    else
+                                    {
+                                        DateTime dateCourante = new DateTime(Model.Annee, Model.Mois, jour);
+                                        var estJourBloque = Model.JoursBloques.Any(jb => jb.DateBloquee == dateCourante);
+                                        var congesDuJour = Model.DemandesConge.Where(dc => dc.DateDebut <= dateCourante && dc.DateFin >= dateCourante).ToList();
+
+                                        <td class="@(estJourBloque ? "bg-secondary text-white" : "")">
+                                            <div class="day-number">@jour</div>
+                                            @if (congesDuJour.Any())
+                                            {
+                                                <div class="conges">
+                                                    @foreach (var conge in congesDuJour)
+                                                    {
+                                                        <div class="conge-item" style="background-color: @conge.Collaborateur.Couleur; color: white;">
+                                                            @conge.Collaborateur.Nom
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </td>
+                                        jour++;
+                                    }
+                                }
+                            </tr>
+                            if (jour > joursDansMois)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .calendar table {
+        table-layout: fixed;
+        height: 600px;
+    }
+
+    .calendar th {
+        text-align: center;
+        background-color: #f8f9fa;
+    }
+
+    .calendar td {
+        height: 100px;
+        vertical-align: top;
+        position: relative;
+    }
+
+    .calendar .empty {
+        background-color: #f8f9fa;
+    }
+
+    .day-number {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .conges {
+        font-size: 0.8em;
+    }
+
+    .conge-item {
+        margin-bottom: 2px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>

@@ -1,21 +1,52 @@
-using System.Diagnostics;
+using ConGest.Data;
 using ConGest.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ConGest.Controllers
 {
+    [Authorize] // Autorise tous les utilisateurs connectés
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
-            _logger = logger;
+            _context = context;
+            _userManager = userManager;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            // Récupérer toutes les demandes de congé
+            var demandesConge = await _context.DemandesConge
+                .Include(dc => dc.Collaborateur)
+                .ToListAsync();
+
+            // Récupérer tous les jours bloqués
+            var joursBloques = await _context.JoursBloques.ToListAsync();
+
+            // Récupérer le collaborateur de l'utilisateur connecté
+            Collaborateur currentCollaborateur = null;
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                currentCollaborateur = await _context.Collaborateurs
+                    .FirstOrDefaultAsync(c => c.ApplicationUserId == user.Id);
+            }
+
+            // Créer un modèle pour la vue
+            var model = new CalendarViewModel
+            {
+                DemandesConge = demandesConge,
+                JoursBloques = joursBloques,
+                CurrentCollaborateur = currentCollaborateur
+            };
+
+            return View(model);
         }
 
         public IActionResult Privacy()
@@ -26,7 +57,21 @@ namespace ConGest.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(new ErrorViewModel { RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+    }
+
+    public class CalendarViewModel
+    {
+        public List<DemandeConge> DemandesConge { get; set; }
+        public List<JourBloque> JoursBloques { get; set; }
+        public Collaborateur CurrentCollaborateur { get; set; } // Ajout du collaborateur courant
+    }
+
+    public class ErrorViewModel
+    {
+        public string? RequestId { get; set; }
+
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
 }

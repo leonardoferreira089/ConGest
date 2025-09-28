@@ -1,0 +1,55 @@
+﻿@model IEnumerable<ConGest.Models.Collaborateur>
+
+@{
+    ViewData["Title"] = "Gestion des collaborateurs";
+}
+
+<h1>Gestion des collaborateurs</h1>
+
+<p>
+    <a asp-action="Create" asp-controller="Collaborateurs">Ajouter un collaborateur</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Nom)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Fonction)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Couleur)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EstActif)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Nom)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Fonction)
+                </td>
+                <td>
+                    <span style="display: inline-block; width: 20px; height: 20px; background-color: @item.Couleur;"></span>
+                    @Html.DisplayFor(modelItem => item.Couleur)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EstActif)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-controller="Collaborateurs" asp-route-id="@item.Id">Modifier</a> |
+                    <a asp-action="Details" asp-controller="Collaborateurs" asp-route-id="@item.Id">Détails</a> |
+                    <a asp-action="Delete" asp-controller="Collaborateurs" asp-route-id="@item.Id">Supprimer</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
