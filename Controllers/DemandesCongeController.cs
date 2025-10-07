@@ -33,27 +33,29 @@ namespace ConGest.Controllers
             var user = await _userManager.GetUserAsync(User);
 
             // Récupérer le collaborateur associé à l'utilisateur
-            Collaborateur collaborateur = null;
+            Collaborateur currentCollaborateur = null;
             if (user != null)
             {
-                collaborateur = await _context.Collaborateurs.FirstOrDefaultAsync(c => c.ApplicationUserId == user.Id);
+                currentCollaborateur = await _context.Collaborateurs.FirstOrDefaultAsync(c => c.ApplicationUserId == user.Id);
             }
 
-            // Si l'utilisateur est un admin, il peut choisir n'importe quel collaborateur
-            if (User.IsInRole("Admin"))
+            // Récupérer tous les collaborateurs actifs
+            var allCollaborateurs = await _context.Collaborateurs
+                .Where(c => c.EstActif)
+                .ToListAsync();
+
+            // Préparer la liste des collaborateurs pour la vue
+            // Si l'utilisateur est un collaborateur, pré-sélectionner son nom
+            if (currentCollaborateur != null)
             {
-                ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Collaborateurs, "Id", "Nom");
-            }
-            else if (collaborateur != null)
-            {
-                // Si l'utilisateur est un collaborateur, pré-remplir son ID
                 ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
-                    new List<Collaborateur> { collaborateur }, "Id", "Nom", collaborateur.Id);
+                    allCollaborateurs, "Id", "Nom", currentCollaborateur.Id);
             }
             else
             {
-                // Si l'utilisateur n'est associé à aucun collaborateur, retourner une erreur
-                return Problem("Vous n'êtes pas associé à un collaborateur.");
+                // Sinon, afficher tous les collaborateurs sans pré-sélection
+                ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
+                    allCollaborateurs, "Id", "Nom");
             }
 
             return View();
@@ -62,24 +64,14 @@ namespace ConGest.Controllers
         // POST: DemandesConge/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,CollaborateurId,DateDebut,DateFin")] DemandeConge demandeConge)
+        public async Task<IActionResult> Create([Bind("CollaborateurId,DateDebut,DateFin")] DemandeConge demandeConge)
         {
-            // Si l'utilisateur n'est pas admin, vérifier qu'il ne modifie pas le CollaborateurId
-            if (!User.IsInRole("Admin"))
-            {
-                var user = await _userManager.GetUserAsync(User);
-                var collaborateur = await _context.Collaborateurs.FirstOrDefaultAsync(c => c.ApplicationUserId == user.Id);
+            // Journalisation pour le débogage
+            System.Diagnostics.Debug.WriteLine($"CollaborateurId: {demandeConge.CollaborateurId}");
+            System.Diagnostics.Debug.WriteLine($"DateDebut: {demandeConge.DateDebut}");
+            System.Diagnostics.Debug.WriteLine($"DateFin: {demandeConge.DateFin}");
 
-                if (collaborateur == null)
-                {
-                    return Problem("Vous n'êtes pas associé à un collaborateur.");
-                }
-
-                // Forcer le CollaborateurId à celui de l'utilisateur connecté
-                demandeConge.CollaborateurId = collaborateur.Id;
-            }
-
-            if (ModelState.IsValid)
+            try
             {
                 // Vérifier si les dates sont valides
                 if (demandeConge.DateFin < demandeConge.DateDebut)
@@ -116,35 +108,188 @@ namespace ConGest.Controllers
                 // Ajouter la demande de congé
                 demandeConge.DateCreation = DateTime.Now;
                 _context.Add(demandeConge);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
+                var result = await _context.SaveChangesAsync();
 
-            return await PrepareCreateView(demandeConge);
+                System.Diagnostics.Debug.WriteLine($"Résultat de SaveChanges: {result}");
+
+                // Rediriger vers la page d'accueil
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                // Journaliser l'exception
+                System.Diagnostics.Debug.WriteLine($"Exception: {ex.Message}");
+                ModelState.AddModelError("", "Une erreur est survenue: " + ex.Message);
+                return await PrepareCreateView(demandeConge);
+            }
         }
 
         private async Task<IActionResult> PrepareCreateView(DemandeConge demandeConge)
         {
+            // Récupérer l'utilisateur connecté
             var user = await _userManager.GetUserAsync(User);
-            Collaborateur collaborateur = null;
+
+            // Récupérer le collaborateur associé à l'utilisateur
+            Collaborateur currentCollaborateur = null;
             if (user != null)
             {
-                collaborateur = await _context.Collaborateurs.FirstOrDefaultAsync(c => c.ApplicationUserId == user.Id);
+                currentCollaborateur = await _context.Collaborateurs.FirstOrDefaultAsync(c => c.ApplicationUserId == user.Id);
             }
 
-            if (User.IsInRole("Admin"))
-            {
-                ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Collaborateurs, "Id", "Nom", demandeConge.CollaborateurId);
-            }
-            else if (collaborateur != null)
+            // Récupérer tous les collaborateurs actifs
+            var allCollaborateurs = await _context.Collaborateurs
+                .Where(c => c.EstActif)
+                .ToListAsync();
+
+            // Préparer la liste des collaborateurs pour la vue
+            // Si l'utilisateur est un collaborateur, pré-sélectionner son nom
+            if (currentCollaborateur != null)
             {
                 ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
-                    new List<Collaborateur> { collaborateur }, "Id", "Nom", collaborateur.Id);
+                    allCollaborateurs, "Id", "Nom", currentCollaborateur.Id);
+            }
+            else
+            {
+                // Sinon, afficher tous les collaborateurs sans pré-sélection
+                ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
+                    allCollaborateurs, "Id", "Nom", demandeConge.CollaborateurId);
             }
 
             return View(demandeConge);
         }
 
-        // Les autres méthodes du contrôleur restent inchangées...
+
+        // GET: DemandesConge/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var demandeConge = await _context.DemandesConge
+                .Include(d => d.Collaborateur)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            
+            if (demandeConge == null)
+            {
+                return NotFound();
+            }
+
+            return View(demandeConge);
+        }
+
+        // GET: DemandesConge/Edit/5
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var demandeConge = await _context.DemandesConge.FindAsync(id);
+            if (demandeConge == null)
+            {
+                return NotFound();
+            }
+
+            // Récupérer tous les collaborateurs actifs pour la liste déroulante
+            var allCollaborateurs = await _context.Collaborateurs
+                .Where(c => c.EstActif)
+                .ToListAsync();
+
+            ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
+                allCollaborateurs, "Id", "Nom", demandeConge.CollaborateurId);
+
+            return View(demandeConge);
+        }
+
+        // POST: DemandesConge/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,CollaborateurId,DateDebut,DateFin,DateCreation")] DemandeConge demandeConge)
+        {
+            if (id != demandeConge.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(demandeConge);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!DemandeCongeExists(demandeConge.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+
+            // En cas d'erreur, préparer à nouveau la liste des collaborateurs
+            var allCollaborateurs = await _context.Collaborateurs
+                .Where(c => c.EstActif)
+                .ToListAsync();
+
+            ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
+                allCollaborateurs, "Id", "Nom", demandeConge.CollaborateurId);
+
+            return View(demandeConge);
+        }
+
+        // GET: DemandesConge/Delete/5
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var demandeConge = await _context.DemandesConge
+                .Include(d => d.Collaborateur)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (demandeConge == null)
+            {
+                return NotFound();
+            }
+
+            return View(demandeConge);
+        }
+
+        // POST: DemandesConge/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var demandeConge = await _context.DemandesConge.FindAsync(id);
+            if (demandeConge != null)
+            {
+                _context.DemandesConge.Remove(demandeConge);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool DemandeCongeExists(int id)
+        {
+            return _context.DemandesConge.Any(e => e.Id == id);
+        }
+
+
     }
 }

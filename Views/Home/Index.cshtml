@@ -26,41 +26,49 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form id="demandeCongeForm">
+                <form id="demandeCongeForm" asp-action="Create" asp-controller="DemandesConge" method="post">
+                    @Html.AntiForgeryToken()
                     <div class="form-group">
                         <label for="collaborateurId">Collaborateur</label>
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <select class="form-control" id="collaborateurId" name="collaborateurId" required>
-                                @foreach (var collaborateur in Model.DemandesConge.Select(dc => dc.Collaborateur).Distinct())
-                                {
-                                    <option value="@collaborateur.Id">@collaborateur.Nom</option>
-                                }
-                            </select>
-                        }
-                        else
-                        {
-                            // Pour les collaborateurs, on utilise le collaborateur connecté
-                            var collaborateur = Model.CurrentCollaborateur;
-                            if (collaborateur != null)
+                        <select class="form-control" id="collaborateurId" name="CollaborateurId" required>
+                            @if (Model.AllCollaborateurs != null && Model.AllCollaborateurs.Any())
                             {
-                                <input type="hidden" id="collaborateurId" name="collaborateurId" value="@collaborateur.Id" />
-                                <input type="text" class="form-control" value="@collaborateur.Nom" readonly />
+                                // Si l'utilisateur est un collaborateur, pré-sélectionner son nom
+                                if (Model.CurrentCollaborateur != null)
+                                {
+                                    <option value="@Model.CurrentCollaborateur.Id" selected>@Model.CurrentCollaborateur.Nom</option>
+
+                                    // Ajouter les autres collaborateurs
+                                    foreach (var collaborateur in Model.AllCollaborateurs)
+                                    {
+                                        if (collaborateur.Id != Model.CurrentCollaborateur.Id)
+                                        {
+                                            <option value="@collaborateur.Id">@collaborateur.Nom</option>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    // Si l'utilisateur n'est pas associé à un collaborateur, afficher tous les collaborateurs
+                                    foreach (var collaborateur in Model.AllCollaborateurs)
+                                    {
+                                        <option value="@collaborateur.Id">@collaborateur.Nom</option>
+                                    }
+                                }
                             }
                             else
                             {
-                                <input type="hidden" id="collaborateurId" name="collaborateurId" value="" />
-                                <input type="text" class="form-control" value="Collaborateur inconnu" readonly />
+                                <option value="">Aucun collaborateur disponible</option>
                             }
-                        }
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="dateDebut">Date de début</label>
-                        <input type="date" class="form-control" id="dateDebut" name="dateDebut" required>
+                        <input type="date" class="form-control" id="dateDebut" name="DateDebut" required>
                     </div>
                     <div class="form-group">
                         <label for="dateFin">Date de fin</label>
-                        <input type="date" class="form-control" id="dateFin" name="dateFin" required>
+                        <input type="date" class="form-control" id="dateFin" name="DateFin" required>
                     </div>
                     <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
                 </form>
@@ -74,18 +82,16 @@
 </div>
 
 <!-- Bouton pour ouvrir le formulaire de demande -->
-@if (User.Identity.IsAuthenticated)
-{
-    <div class="fixed-bottom mb-3 mr-3 text-right">
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#demandeCongeModal">
-            Nouvelle demande
-        </button>
-    </div>
-}
+<div class="fixed-bottom mb-3 mr-3 text-right">
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#demandeCongeModal">
+        Nouvelle demande
+    </button>
+</div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
@@ -98,29 +104,35 @@
                     right: 'dayGridMonth,dayGridWeek,dayGridDay'
                 },
                 events: [
-        @foreach (var demande in Model.DemandesConge)
+        @if (Model.DemandesConge != null)
         {
-            <text>
-                                {
-                                    title: '@demande.Collaborateur.Nom',
-                                    start: '@demande.DateDebut.ToString("yyyy-MM-dd")',
-                                    end: '@demande.DateFin.AddDays(1).ToString("yyyy-MM-dd")',
-                                    color: '@demande.Collaborateur.Couleur',
-                                    textColor: '#ffffff'
-                                },
-            </text>
+            @foreach (var demande in Model.DemandesConge)
+            {
+                <text>
+                                        {
+                                            title: '@demande.Collaborateur.Nom',
+                                            start: '@demande.DateDebut.ToString("yyyy-MM-dd")',
+                                            end: '@demande.DateFin.AddDays(1).ToString("yyyy-MM-dd")',
+                                            color: '@demande.Collaborateur.Couleur',
+                                            textColor: '#ffffff'
+                                        },
+                </text>
+            }
         }
-        @foreach (var jour in Model.JoursBloques)
+        @if (Model.JoursBloques != null)
         {
-            <text>
-                                {
-                                    title: 'Jour bloqué: @jour.Raison',
-                                    start: '@jour.DateBloquee.ToString("yyyy-MM-dd")',
-                                    end: '@jour.DateBloquee.AddDays(1).ToString("yyyy-MM-dd")',
-                                    color: '#cccccc',
-                                    textColor: '#000000'
-                                },
-            </text>
+            @foreach (var jour in Model.JoursBloques)
+            {
+                <text>
+                                        {
+                                            title: 'Jour bloqué: @jour.Raison',
+                                            start: '@jour.DateBloquee.ToString("yyyy-MM-dd")',
+                                            end: '@jour.DateBloquee.AddDays(1).ToString("yyyy-MM-dd")',
+                                            color: '#cccccc',
+                                            textColor: '#000000'
+                                        },
+                </text>
+            }
         }
                 ]
             });
@@ -129,33 +141,16 @@
             // Gestion du formulaire de demande de congé
             document.getElementById('submitDemande').addEventListener('click', function() {
                 var form = document.getElementById('demandeCongeForm');
-                var formData = new FormData(form);
                 var errorMessage = document.getElementById('errorMessage');
 
-                fetch('/DemandesConge/Create', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        // Fermer la modal et rafraîchir la page
-                        $('#demandeCongeModal').modal('hide');
-                        location.reload();
-                    } else {
-                        return response.json().then(data => {
-                            // Afficher les erreurs
-                            errorMessage.textContent = data.message || 'Une erreur est survenue.';
-                            errorMessage.style.display = 'block';
-                        });
-                    }
-                })
-                .catch(error => {
-                    errorMessage.textContent = 'Une erreur est survenue: ' + error.message;
-                    errorMessage.style.display = 'block';
-                });
+                // Afficher les données du formulaire dans la console pour le débogage
+                console.log("Données du formulaire:");
+                console.log("CollaborateurId: " + document.getElementById('collaborateurId').value);
+                console.log("DateDebut: " + document.getElementById('dateDebut').value);
+                console.log("DateFin: " + document.getElementById('dateFin').value);
+
+                // Soumettre le formulaire directement
+                form.submit();
             });
         });
     </script>

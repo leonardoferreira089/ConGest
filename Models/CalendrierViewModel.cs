@@ -8,5 +8,6 @@ namespace ConGest.Models
         public int Mois { get; set; }
         public List<DemandeConge> DemandesConge { get; set; } = new List<DemandeConge>();
         public List<JourBloque> JoursBloques { get; set; } = new List<JourBloque>();
+
     }
 }

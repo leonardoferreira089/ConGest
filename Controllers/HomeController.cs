@@ -21,7 +21,7 @@ namespace ConGest.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Récupérer toutes les demandes de congé
+            // Récupérer toutes les demandes de congé avec les collaborateurs associés
             var demandesConge = await _context.DemandesConge
                 .Include(dc => dc.Collaborateur)
                 .ToListAsync();
@@ -38,12 +38,18 @@ namespace ConGest.Controllers
                     .FirstOrDefaultAsync(c => c.ApplicationUserId == user.Id);
             }
 
+            // Récupérer tous les collaborateurs actifs
+            var allCollaborateurs = await _context.Collaborateurs
+                .Where(c => c.EstActif)
+                .ToListAsync();
+
             // Créer un modèle pour la vue
             var model = new CalendarViewModel
             {
                 DemandesConge = demandesConge,
                 JoursBloques = joursBloques,
-                CurrentCollaborateur = currentCollaborateur
+                CurrentCollaborateur = currentCollaborateur,
+                AllCollaborateurs = allCollaborateurs
             };
 
             return View(model);
@@ -63,15 +69,15 @@ namespace ConGest.Controllers
 
     public class CalendarViewModel
     {
-        public List<DemandeConge> DemandesConge { get; set; }
-        public List<JourBloque> JoursBloques { get; set; }
-        public Collaborateur CurrentCollaborateur { get; set; } // Ajout du collaborateur courant
+        public List<DemandeConge> DemandesConge { get; set; } = new List<DemandeConge>();
+        public List<JourBloque> JoursBloques { get; set; } = new List<JourBloque>();
+        public Collaborateur CurrentCollaborateur { get; set; }
+        public List<Collaborateur> AllCollaborateurs { get; set; } = new List<Collaborateur>();
     }
 
     public class ErrorViewModel
     {
         public string? RequestId { get; set; }
-
         public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
 }
