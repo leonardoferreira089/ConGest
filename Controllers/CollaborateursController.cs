@@ -89,7 +89,7 @@ namespace ConGest.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Collaborateurs", "Admin");
             }
             return View(collaborateur);
         }
@@ -124,7 +124,7 @@ namespace ConGest.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Collaborateurs", "Admin");
         }
 
         private bool CollaborateurExists(int id)

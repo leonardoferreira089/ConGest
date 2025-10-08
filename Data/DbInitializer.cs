@@ -57,11 +57,14 @@ namespace ConGest.Data
             // Créer des collaborateurs par défaut si nécessaire
             if (!context.Collaborateurs.Any())
             {
+                // Liste de couleurs uniques
+                var couleursDisponibles = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F333FF", "#FF33A1", "#33FFF6" };
+
                 // Créer un collaborateur pour l'utilisateur admin
                 var adminCollaborateur = new Collaborateur
                 {
                     Nom = "Administrateur",
-                    Couleur = "#000000",
+                    Couleur = couleursDisponibles[0], // Utiliser la première couleur
                     Fonction = "Administrateur",
                     ApplicationUserId = adminUser.Id
                 };
@@ -71,7 +74,7 @@ namespace ConGest.Data
                 var collaborateur1 = new Collaborateur
                 {
                     Nom = "Collaborateur Test",
-                    Couleur = "#FF5733",
+                    Couleur = couleursDisponibles[1], // Utiliser la deuxième couleur
                     Fonction = "Préparateur de commandes",
                     ApplicationUserId = collaborateurUser.Id
                 };
@@ -81,7 +84,7 @@ namespace ConGest.Data
                 var collaborateur2 = new Collaborateur
                 {
                     Nom = "Marie Martin",
-                    Couleur = "#33FF57",
+                    Couleur = couleursDisponibles[2], // Utiliser la troisième couleur
                     Fonction = "Cariste"
                 };
                 context.Collaborateurs.Add(collaborateur2);
@@ -94,11 +97,16 @@ namespace ConGest.Data
                 var collaborateur = await context.Collaborateurs.FirstOrDefaultAsync(c => c.ApplicationUserId == collaborateurUser.Id);
                 if (collaborateur == null)
                 {
+                    // Trouver une couleur non utilisée
+                    var couleursUtilisees = context.Collaborateurs.Select(c => c.Couleur).ToList();
+                    var couleursDisponibles = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F333FF", "#FF33A1", "#33FFF6" };
+                    var nouvelleCouleur = couleursDisponibles.FirstOrDefault(c => !couleursUtilisees.Contains(c)) ?? "#" + Guid.NewGuid().ToString("N").Substring(0, 6);
+
                     // Si non, créer un collaborateur pour cet utilisateur
                     collaborateur = new Collaborateur
                     {
                         Nom = "Collaborateur Test",
-                        Couleur = "#FF5733",
+                        Couleur = nouvelleCouleur,
                         Fonction = "Préparateur de commandes",
                         ApplicationUserId = collaborateurUser.Id
                     };

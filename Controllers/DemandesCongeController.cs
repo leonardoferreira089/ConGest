@@ -209,19 +209,24 @@ namespace ConGest.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,CollaborateurId,DateDebut,DateFin,DateCreation")] DemandeConge demandeConge)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id != demandeConge.Id)
+            // Récupérer l'entité existante depuis la base de données
+            var demandeConge = await _context.DemandesConge.FindAsync(id);
+            if (demandeConge == null)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            // Essayer de mettre à jour le modèle avec les valeurs du formulaire
+            if (await TryUpdateModelAsync(demandeConge, "",
+                d => d.CollaborateurId, d => d.DateDebut, d => d.DateFin))
             {
                 try
                 {
                     _context.Update(demandeConge);
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -234,10 +239,9 @@ namespace ConGest.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
             }
 
-            // En cas d'erreur, préparer à nouveau la liste des collaborateurs
+            // Si le modèle n'est pas valide, préparer à nouveau la liste des collaborateurs
             var allCollaborateurs = await _context.Collaborateurs
                 .Where(c => c.EstActif)
                 .ToListAsync();
