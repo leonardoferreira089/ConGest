@@ -19,32 +19,53 @@ namespace ConGest.Controllers
             _userManager = userManager;
         }
 
-        // GET: JoursBloques
+        // GET: Admin/JoursBloques
         public async Task<IActionResult> Index()
         {
-            return View(await _context.JoursBloques.ToListAsync());
+            return View("~/Views/Admin/JoursBloques.cshtml", await _context.JoursBloques.ToListAsync());
         }
 
         // GET: JoursBloques/Create
         public IActionResult Create()
         {
-            return View();
+            var jourBloque = new JourBloque
+            {
+                DateBloquee = DateTime.Today 
+            };
+            return View("~/Views/JoursBloques/Create.cshtml", jourBloque);
         }
 
         // POST: JoursBloques/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,DateBloquee,Raison")] JourBloque jourBloque)
+        public async Task<IActionResult> Create([Bind("DateBloquee,Raison")] JourBloque jourBloque)
         {
-            if (ModelState.IsValid)
+            try
             {
+                // Remplir automatiquement l'utilisateur sans validation complexe
                 var user = await _userManager.GetUserAsync(User);
-                jourBloque.UtilisateurBloqueur = user?.Email ?? "Inconnu";
-                _context.Add(jourBloque);
+                jourBloque.UtilisateurBloqueur = user?.Email ?? "Système";
+
+                // Vérification simple de l'unicité de la date
+                if (await _context.JoursBloques.AnyAsync(j => j.DateBloquee == jourBloque.DateBloquee))
+                {
+                    ModelState.AddModelError("DateBloquee", "Cette date est déjà bloquée.");
+                    return View(jourBloque);
+                }
+
+                // Ajout direct sans validation complexe
+                _context.JoursBloques.Add(jourBloque);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+
+                // Redirection simple vers la liste
+                return RedirectToAction("Index", "JoursBloques");
             }
-            return View(jourBloque);
+            catch (Exception ex)
+            {
+                // En cas d'erreur, afficher un message simple
+                ModelState.AddModelError("", "Erreur lors de la création: " + ex.Message);
+                return View(jourBloque);
+            }
         }
 
         // GET: JoursBloques/Edit/5
@@ -60,7 +81,7 @@ namespace ConGest.Controllers
             {
                 return NotFound();
             }
-            return View(jourBloque);
+            return View("~/Views/JoursBloques/Edit.cshtml", jourBloque);
         }
 
         // POST: JoursBloques/Edit/5
@@ -77,6 +98,15 @@ namespace ConGest.Controllers
             {
                 try
                 {
+                    bool dateExists = await _context.JoursBloques
+                        .AnyAsync(j => j.DateBloquee == jourBloque.DateBloquee && j.Id != id);
+
+                    if (dateExists)
+                    {
+                        ModelState.AddModelError("DateBloquee", "Cette date est déjà bloquée.");
+                        return View("~/Views/JoursBloques/Edit.cshtml", jourBloque);
+                    }
+
                     _context.Update(jourBloque);
                     await _context.SaveChangesAsync();
                 }
@@ -91,9 +121,9 @@ namespace ConGest.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("JoursBloques", "Admin");
             }
-            return View(jourBloque);
+            return View("~/Views/JoursBloques/Edit.cshtml", jourBloque);
         }
 
         // GET: JoursBloques/Delete/5
@@ -111,7 +141,7 @@ namespace ConGest.Controllers
                 return NotFound();
             }
 
-            return View(jourBloque);
+            return View("~/Views/JoursBloques/Delete.cshtml", jourBloque);
         }
 
         // POST: JoursBloques/Delete/5
@@ -126,7 +156,7 @@ namespace ConGest.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("JoursBloques", "Admin");
         }
 
         private bool JourBloqueExists(int id)

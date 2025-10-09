@@ -1,7 +1,7 @@
 ﻿@model ConGest.Models.JourBloque
-
 @{
     ViewData["Title"] = "Supprimer un jour bloqué";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <h1>Supprimer un jour bloqué</h1>
@@ -34,6 +34,6 @@
     <form asp-action="Delete">
         <input type="hidden" asp-for="Id" />
         <input type="submit" value="Supprimer" class="btn btn-danger" /> |
-        <a asp-action="Index">Retour à la liste</a>
+        <a asp-action="JoursBloques" asp-controller="Admin">Retour à la liste</a>
     </form>
 </div>

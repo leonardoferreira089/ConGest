@@ -1,11 +1,12 @@
 ﻿@model ConGest.Models.JourBloque
-
 @{
     ViewData["Title"] = "Modifier un jour bloqué";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <h1>Modifier un jour bloqué</h1>
 
+<h4>JourBloque</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -14,13 +15,18 @@
             <input type="hidden" asp-for="Id" />
             <div class="form-group">
                 <label asp-for="DateBloquee" class="control-label"></label>
-                <input asp-for="DateBloquee" class="form-control" type="date" />
+                <input asp-for="DateBloquee" class="form-control" />
                 <span asp-validation-for="DateBloquee" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Raison" class="control-label"></label>
                 <input asp-for="Raison" class="form-control" />
                 <span asp-validation-for="Raison" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UtilisateurBloqueur" class="control-label"></label>
+                <input asp-for="UtilisateurBloqueur" class="form-control" readonly />
+                <span asp-validation-for="UtilisateurBloqueur" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Enregistrer" class="btn btn-primary" />
@@ -30,7 +36,7 @@
 </div>
 
 <div>
-    <a asp-action="Index">Retour à la liste</a>
+    <a asp-action="JoursBloques" asp-controller="Admin">Retour à la liste</a>
 </div>
 
 @section Scripts {

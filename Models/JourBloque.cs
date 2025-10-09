@@ -14,7 +14,7 @@ namespace ConGest.Models
 
         [StringLength(200)]
         public string Raison { get; set; }
-
-        public string UtilisateurBloqueur { get; set; }
+        [Required]
+        public string UtilisateurBloqueur { get; set; } = "Système";
     }
 }

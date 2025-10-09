@@ -36,8 +36,9 @@ namespace ConGest.Controllers
 
         public async Task<IActionResult> JoursBloques()
         {
-            var jours = await _context.JoursBloques.ToListAsync();
-            return View(jours);
+            var joursBloques = await _context.JoursBloques.ToListAsync();
+            return View("~/Views/Admin/JoursBloques.cshtml", joursBloques);
         }
+
     }
 }
