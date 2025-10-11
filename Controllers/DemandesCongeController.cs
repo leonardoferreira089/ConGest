@@ -188,7 +188,10 @@ namespace ConGest.Controllers
                 return NotFound();
             }
 
-            var demandeConge = await _context.DemandesConge.FindAsync(id);
+            var demandeConge = await _context.DemandesConge
+                .Include(d => d.Collaborateur)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
             if (demandeConge == null)
             {
                 return NotFound();
@@ -209,47 +212,96 @@ namespace ConGest.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,CollaborateurId,DateDebut,DateFin,DateCreation")] DemandeConge demandeConge)
         {
-            // Récupérer l'entité existante depuis la base de données
-            var demandeConge = await _context.DemandesConge.FindAsync(id);
-            if (demandeConge == null)
+            if (id != demandeConge.Id)
             {
                 return NotFound();
             }
 
-            // Essayer de mettre à jour le modèle avec les valeurs du formulaire
-            if (await TryUpdateModelAsync(demandeConge, "",
-                d => d.CollaborateurId, d => d.DateDebut, d => d.DateFin))
+            // Récupérer l'entité existante avec ses relations
+            var existingDemande = await _context.DemandesConge
+                .Include(d => d.Collaborateur)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (existingDemande == null)
             {
-                try
-                {
-                    _context.Update(demandeConge);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DemandeCongeExists(demandeConge.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                return NotFound();
             }
 
-            // Si le modèle n'est pas valide, préparer à nouveau la liste des collaborateurs
+            try
+            {                
+                if (demandeConge.DateFin < demandeConge.DateDebut)
+                {
+                    ModelState.AddModelError("", "La date de fin doit être postérieure à la date de début.");
+                    await PrepareEditView(demandeConge);
+                    return View(demandeConge);
+                }
+
+                var existingConges = await _context.DemandesConge
+                    .Where(dc => dc.Id != id && 
+                                dc.CollaborateurId != demandeConge.CollaborateurId &&
+                                ((dc.DateDebut >= demandeConge.DateDebut && dc.DateDebut <= demandeConge.DateFin) ||
+                                 (dc.DateFin >= demandeConge.DateDebut && dc.DateFin <= demandeConge.DateFin) ||
+                                 (dc.DateDebut <= demandeConge.DateDebut && dc.DateFin >= demandeConge.DateFin)))
+                    .ToListAsync();
+
+                if (existingConges.Any())
+                {
+                    ModelState.AddModelError("", "Date indisponible - Congé déjà enregistré par un collaborateur");
+                    await PrepareEditView(demandeConge);
+                    return View(demandeConge);
+                }
+
+                var joursBloques = await _context.JoursBloques
+                    .Where(jb => jb.DateBloquee >= demandeConge.DateDebut && jb.DateBloquee <= demandeConge.DateFin)
+                    .ToListAsync();
+
+                if (joursBloques.Any())
+                {
+                    ModelState.AddModelError("", "Date bloquée par l'administrateur - Manque de personnel prévu");
+                    await PrepareEditView(demandeConge);
+                    return View(demandeConge);
+                }
+
+                existingDemande.CollaborateurId = demandeConge.CollaborateurId;
+                existingDemande.DateDebut = demandeConge.DateDebut;
+                existingDemande.DateFin = demandeConge.DateFin;
+
+
+                _context.Update(existingDemande);
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!DemandeCongeExists(demandeConge.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Une erreur est survenue: " + ex.Message);
+                await PrepareEditView(demandeConge);
+                return View(demandeConge);
+            }
+        }
+
+        private async Task PrepareEditView(DemandeConge demandeConge)
+        {
+
             var allCollaborateurs = await _context.Collaborateurs
                 .Where(c => c.EstActif)
                 .ToListAsync();
 
             ViewData["CollaborateurId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
                 allCollaborateurs, "Id", "Nom", demandeConge.CollaborateurId);
-
-            return View(demandeConge);
         }
 
         // GET: DemandesConge/Delete/5
