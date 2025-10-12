@@ -4,10 +4,15 @@
     ViewData["Title"] = "Gestion des demandes de congé";
 }
 
-<h1>Gestion des demandes de congé</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Gestion des demandes de congé</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Nouvelle demande
+    </a>
+</div>
 
-<table class="table">
-    <thead>
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
         <tr>
             <th>
                 Collaborateur
@@ -24,7 +29,7 @@
             <th>
                 @Html.DisplayNameFor(model => model.DateCreation)
             </th>
-            <th></th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -47,10 +52,23 @@
                     @Html.DisplayFor(modelItem => item.DateCreation)
                 </td>
                 <td>
-                    <a asp-action="Edit" asp-controller="DemandesConge" asp-route-id="@item.Id">Modifier</a> |                    
-                    <a asp-action="Delete" asp-controller="DemandesConge" asp-route-id="@item.Id">Supprimer</a>
+                    <div class="btn-group" role="group">
+                        <a asp-action="Edit" asp-controller="DemandesConge" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a asp-action="Delete" asp-controller="DemandesConge" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle me-2"></i>Aucune demande de congé trouvée.
+    </div>
+}

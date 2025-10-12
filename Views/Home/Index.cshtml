@@ -3,34 +3,49 @@
     ViewData["Title"] = "Calendrier des congés";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Calendrier des congés</h1>
+<!-- Bouton fixe "Nouvelle demande" en haut de la page -->
+<div class="sticky-top bg-white py-2 border-bottom shadow-sm" style="z-index: 1020; top: 56px;">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h4 mb-0">Calendrier des congés</h1>
+                <p class="text-muted mb-0">Visualisez et gérez les demandes de congés et les jours bloqués</p>
+            </div>
+            @if (User.IsInRole("Collaborateur"))
+            {
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#demandeCongeModal">
+                    <i class="fas fa-plus me-2"></i>Nouvelle demande
+                </button>
+            }
+        </div>
+    </div>
 </div>
 
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-12">
-            <div id="calendar"></div>
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div id="calendar" style="min-height: 600px;"></div>
         </div>
     </div>
 </div>
 
 <!-- Formulaire de demande de congé -->
-<div class="modal fade" id="demandeCongeModal" tabindex="-1" role="dialog" aria-labelledby="demandeCongeModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" id="demandeCongeModal" tabindex="-1" aria-labelledby="demandeCongeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="demandeCongeModalLabel">Nouvelle demande de congé</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="demandeCongeModalLabel">
+                    <i class="fas fa-calendar-plus me-2"></i>Nouvelle demande de congé
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="demandeCongeForm" asp-action="Create" asp-controller="DemandesConge" method="post">
                     @Html.AntiForgeryToken()
-                    <div class="form-group">
-                        <label for="collaborateurId">Collaborateur</label>
-                        <select class="form-control" id="collaborateurId" name="CollaborateurId" required>
+
+                    <div class="mb-3">
+                        <label for="collaborateurId" class="form-label fw-bold">Collaborateur</label>
+                        <select class="form-select" id="collaborateurId" name="CollaborateurId" required>
                             @if (Model.AllCollaborateurs != null && Model.AllCollaborateurs.Any())
                             {
                                 // Si l'utilisateur est un collaborateur, pré-sélectionner son nom
@@ -62,36 +77,39 @@
                             }
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="dateDebut">Date de début</label>
-                        <input type="date" class="form-control" id="dateDebut" name="DateDebut" required>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="dateDebut" class="form-label fw-bold">Date de début</label>
+                            <input type="date" class="form-control" id="dateDebut" name="DateDebut" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dateFin" class="form-label fw-bold">Date de fin</label>
+                            <input type="date" class="form-control" id="dateFin" name="DateFin" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="dateFin">Date de fin</label>
-                        <input type="date" class="form-control" id="dateFin" name="DateFin" required>
-                    </div>
-                    <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
+
+                    <div id="errorMessage" class="alert alert-danger d-none"></div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="submitDemande">Soumettre</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="submitDemande">
+                    <i class="fas fa-paper-plane me-2"></i>Soumettre
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Bouton pour ouvrir le formulaire de demande -->
-<div class="fixed-bottom mb-3 mr-3 text-right">
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#demandeCongeModal">
-        Nouvelle demande
-    </button>
-</div>
-
 @section Scripts {
+    <!-- FullCalendar -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <!-- jQuery pour la soumission du formulaire -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
@@ -103,6 +121,7 @@
                     center: 'title',
                     right: 'dayGridMonth,dayGridWeek,dayGridDay'
                 },
+                height: 'auto',
                 events: [
         @if (Model.DemandesConge != null)
         {
@@ -128,13 +147,19 @@
                                             title: 'Jour bloqué: @jour.Raison',
                                             start: '@jour.DateBloquee.ToString("yyyy-MM-dd")',
                                             end: '@jour.DateBloquee.AddDays(1).ToString("yyyy-MM-dd")',
-                                            color: '#cccccc',
-                                            textColor: '#000000'
+                                            color: '#6c757d',
+                                            textColor: '#ffffff'
                                         },
                 </text>
             }
         }
-                ]
+                ],
+                eventDisplay: 'block',
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }
             });
             calendar.render();
 
@@ -143,14 +168,51 @@
                 var form = document.getElementById('demandeCongeForm');
                 var errorMessage = document.getElementById('errorMessage');
 
+                // Réinitialiser le message d'erreur
+                errorMessage.classList.add('d-none');
+                errorMessage.textContent = '';
+
+                // Valider les dates
+                var dateDebut = new Date(document.getElementById('dateDebut').value);
+                var dateFin = new Date(document.getElementById('dateFin').value);
+
+                if (dateFin < dateDebut) {
+                    errorMessage.textContent = 'La date de fin doit être postérieure à la date de début.';
+                    errorMessage.classList.remove('d-none');
+                    return;
+                }
+
                 // Afficher les données du formulaire dans la console pour le débogage
                 console.log("Données du formulaire:");
                 console.log("CollaborateurId: " + document.getElementById('collaborateurId').value);
                 console.log("DateDebut: " + document.getElementById('dateDebut').value);
                 console.log("DateFin: " + document.getElementById('dateFin').value);
 
-                // Soumettre le formulaire directement
-                form.submit();
+                // Soumettre le formulaire via AJAX
+                $.ajax({
+                    type: "POST",
+                    url: form.action,
+                    data: $(form).serialize(),
+                    success: function(response) {
+                        // Fermer le modal
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('demandeCongeModal'));
+                        modal.hide();
+
+                        // Réinitialiser le formulaire
+                        form.reset();
+
+                        // Afficher un message de succès
+                        alert("Demande de congé soumise avec succès!");
+
+                        // Recharger la page pour mettre à jour le calendrier
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        // Afficher le message d'erreur
+                        errorMessage.textContent = xhr.responseText || "Une erreur s'est produite lors de la soumission de la demande.";
+                        errorMessage.classList.remove('d-none');
+                    }
+                });
             });
         });
     </script>
