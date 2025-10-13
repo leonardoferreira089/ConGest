@@ -272,7 +272,7 @@ namespace ConGest.Controllers
                 _context.Update(existingDemande);
                 await _context.SaveChangesAsync();
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("DemandesConge", "Admin");
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -338,7 +338,7 @@ namespace ConGest.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("DemandesConge","Admin");
         }
 
         private bool DemandeCongeExists(int id)
